@@ -20,21 +20,17 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <Eigen/LU>
 #include <m-detector/DynObjCluster.h>
+#include <m-detector/parallel_utils.h>
 #include <parallel_q.h>
 #include <algorithm>
 #include <chrono>
-#include <execution>
 #include <mutex>
-#include <opencv2/opencv.hpp>
 #include <string>
-#include <opencv2/highgui.hpp>
-#include <opencv2/highgui/highgui.hpp>
 // #include <tinycolormap.hpp>
 
 
 using namespace std;
 using namespace Eigen;
-using namespace cv;
 
 /*** For dynamic object filtering ***/
 #define PI_MATH (3.141593f)
@@ -321,7 +317,7 @@ public:
         project_T = transl;
         map_index = frame;
         double t = omp_get_wtime();
-        std::for_each(std::execution::par, index_vector.begin(), index_vector.end(), [&](const int &i)
+        m_detector::parallel_for_each(index_vector.begin(), index_vector.end(), [&](const int &i)
         {
             depth_map[i].clear();
         });

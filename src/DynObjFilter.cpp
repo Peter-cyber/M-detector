@@ -4,7 +4,6 @@
 #include <m-detector/DynObjFilter.h>
 // #include <algorithm>
 // #include <chrono>
-// #include <execution>
 
 #define PI_MATH  (3.14159f)
 
@@ -256,8 +255,7 @@ void  DynObjFilter::filter(PointCloudXYZI::Ptr feats_undistort, const M3D & rot_
     points.resize(size);
     point_soph* p = point_soph_pointers[cur_point_soph_pointers];
     if(time_file != "") time_out << size << " "; //rec computation time
-    std::for_each(std::execution::par, index.begin(), index.end(), [&](const int &i)
-    // std::for_each(std::execution::seq, index.begin(), index.end(), [&](const int &i)
+    m_detector::parallel_for_each(index.begin(), index.end(), [&](const int &i)
     {   
         p[i].reset();     
         V3D p_body(feats_undistort->points[i].x, feats_undistort->points[i].y, feats_undistort->points[i].z);
@@ -561,7 +559,7 @@ void  DynObjFilter::Points2Buffer(vector<point_soph*> &points, std::vector<int> 
 {
     int cur_tail = buffer.tail;
     buffer.push_parallel_prepare(points.size());
-    std::for_each(std::execution::par, index_vector.begin(), index_vector.end(), [&](const int &i)
+    m_detector::parallel_for_each(index_vector.begin(), index_vector.end(), [&](const int &i)
     {   
         buffer.push_parallel(points[i], cur_tail+i);
     });
@@ -1908,4 +1906,3 @@ void DynObjFilter::set_path(string file_path, string file_path_origin)
     out_file = file_path;
     out_file_origin = file_path_origin;
 }
-

@@ -26,7 +26,6 @@
 #include <geometry_msgs/Vector3.h>
 #include <pcl/filters/random_sample.h>
 #include <Eigen/Eigen>
-#include <eigen_conversions/eigen_msg.h>
 
 #include <deque>
 
@@ -63,10 +62,9 @@ ros::Publisher pub_pcl_dyn, pub_pcl_dyn_extend, pub_pcl_std;
 
 void OdomCallback(const nav_msgs::Odometry &cur_odom)
 {
-    Eigen::Quaterniond cur_q;
-    geometry_msgs::Quaternion tmp_q;
-    tmp_q = cur_odom.pose.pose.orientation;
-    tf::quaternionMsgToEigen(tmp_q, cur_q);
+    const geometry_msgs::Quaternion &tmp_q = cur_odom.pose.pose.orientation;
+    Eigen::Quaterniond cur_q(tmp_q.w, tmp_q.x, tmp_q.y, tmp_q.z);
+    cur_q.normalize();
     cur_rot = cur_q.matrix();
     cur_pos << cur_odom.pose.pose.position.x, cur_odom.pose.pose.position.y, cur_odom.pose.pose.position.z;
     buffer_rots.push_back(cur_rot);

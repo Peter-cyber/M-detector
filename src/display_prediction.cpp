@@ -29,7 +29,9 @@
 #include <unistd.h> 
 #include <dirent.h> 
 #include <iomanip>
+#ifdef M_DETECTOR_HAS_LIVOX
 #include <livox_ros_driver/CustomMsg.h>
+#endif
 
 using namespace std;
 
@@ -179,6 +181,7 @@ void PointsCallback(const sensor_msgs::PointCloud2ConstPtr& msg_in)
 }
 
 
+#ifdef M_DETECTOR_HAS_LIVOX
 void AviaPointsCallback(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
 {   
     PointCloudXYZI::Ptr points_in(new PointCloudXYZI());
@@ -315,6 +318,7 @@ void AviaPointsCallback(const livox_ros_driver::CustomMsg::ConstPtr &msg_in)
     // pred_input.seekg(0, std::ios::beg);
     
 }
+#endif
 
 
 
@@ -356,7 +360,12 @@ int main(int argc, char** argv)
     ros::Subscriber sub_pcl;
     if(points_topic == "/livox/lidar")
     {
+#ifdef M_DETECTOR_HAS_LIVOX
         sub_pcl = nh.subscribe(points_topic, 200000, AviaPointsCallback);
+#else
+        ROS_WARN("livox_ros_driver was not found at build time; subscribing to /livox/lidar as sensor_msgs/PointCloud2");
+        sub_pcl = nh.subscribe(points_topic, 200000, PointsCallback);
+#endif
     }
     else
     {

@@ -41,36 +41,20 @@ Eigen    ≥ 3.3.4
 
 `sudo apt install libeigen3-dev`
 
-### 2.3 **livox_ros_driver**
+### 2.3 **livox_ros_driver** (optional for Livox input)
 
 Follow [livox_ros_driver Installation](https://github.com/Livox-SDK/livox_ros_driver).
 
 *Remarks:*
 
-* Since the M-detector support Livox serials LiDAR firstly, so the **livox_ros_driver** must be installed and **sourced** before run any M-detector launch file.
+* Install and source **livox_ros_driver** when using Livox CustomMsg input, such as `/livox/lidar`. Non-Livox `sensor_msgs/PointCloud2` inputs can build and run without it.
 * How to source? The easiest way is add the line `source $Livox_ros_driver_dir$/devel/setup.bash` to the end of file `~/.bashrc`, where `$Livox_ros_driver_dir$` is the directory of the livox ros driver workspace (should be the `ws_livox` directory if you completely followed the livox official document).
 
-### 2.4 TBB
+### 2.4 OpenMP
 
-Install gcc-9 g++-9
+M-detector uses OpenMP for CPU parallel loops. On Ubuntu, the OpenMP runtime is usually provided by the system compiler package. If your build environment does not include it, install the compiler runtime package for your distribution, for example:
 
-`sudo add-apt-repository ppa:ubuntu-toolchain-r/test`
-
-`sudo apt update`
-
-`sudo apt install gcc-9 g++-9`
-
-`cd /usr/bin`
-
-`sudo rm gcc g++`
-
-`sudo ln -s gcc-9  gcc`
-
-`sudo ln -s g++-9 g++`
-
-Follow [[TBB Installation](https://solarianprogrammer.com/2019/05/09/cpp-17-stl-parallel-algorithms-gcc-intel-tbb-linux-macos/)] (**Note:** change the gcc-9.1/g++-9.1 to gcc-9/g++-9)
-
-Change the TBB path (line 51-52) in CMakeLists.txt
+`sudo apt install g++`
 ## 3. Build
 
 Clone the repository and catkin_make:
@@ -82,7 +66,6 @@ Clone the repository and catkin_make:
 `catkin_make`
 
 `source devel/setup.bash`
-(**Note:** change the path for TBB in CMakeList.txt)
 
 ## 4. Key Information
 

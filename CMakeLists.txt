@@ -3,8 +3,7 @@ project(m_detector)
 
 SET(CMAKE_BUILD_TYPE "Release")
 
-ADD_COMPILE_OPTIONS(-std=c++17 )
-set( CMAKE_CXX_FLAGS "-std=c++17 -O3 -ltbb" ) 
+add_compile_options(-O3)
 
 add_definitions(-DROOT_DIR=\"${CMAKE_CURRENT_SOURCE_DIR}/\")
 
@@ -12,7 +11,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fexceptions" )
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -ltbb -pthread -std=c++1z -std=c++17 -fexceptions")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -fexceptions")
 
 message("Current CPU archtecture: ${CMAKE_SYSTEM_PROCESSOR}")
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "(x86)|(X86)|(amd64)|(AMD64)" )
@@ -40,16 +39,13 @@ else()
   add_definitions(-DMP_PROC_NUM=1)
 endif()
 
-find_package(OpenMP QUIET)
+find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}   ${OpenMP_C_FLAGS}")
 
 find_package(PythonLibs REQUIRED)
 # find_path(MATPLOTLIB_CPP_INCLUDE_DIRS "matplotlibcpp.h")
 
-set(TBB_DIR "/usr/local/tbb-2019_U8")
-include("/home/huajie/package/oneTBB-2019_U8/cmake/TBBBuild.cmake")
-tbb_build(TBB_ROOT "/home/huajie/package/oneTBB-2019_U8" CONFIG_DIR TBB_DIR)
 find_package(catkin REQUIRED COMPONENTS
   geometry_msgs
   nav_msgs
@@ -59,15 +55,18 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   pcl_ros
   tf
-  livox_ros_driver
   message_generation
-  eigen_conversions
 )
+
+find_package(livox_ros_driver QUIET)
+if(livox_ros_driver_FOUND)
+  add_definitions(-DM_DETECTOR_HAS_LIVOX)
+else()
+  message(WARNING "livox_ros_driver not found; Livox CustomMsg support in display_prediction will be disabled")
+endif()
 
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.8 REQUIRED)
-find_package(TBB REQUIRED)
-find_package(OpenCV REQUIRED)
 
 message(Eigen: ${EIGEN3_INCLUDE_DIR})
 
@@ -76,6 +75,7 @@ include_directories(
   ${EIGEN3_INCLUDE_DIR}
   ${PCL_INCLUDE_DIRS}
   ${PYTHON_INCLUDE_DIRS}
+  ${livox_ros_driver_INCLUDE_DIRS}
   include)
 
 generate_messages(
@@ -89,18 +89,27 @@ catkin_package(
   INCLUDE_DIRS
 )
 
+set(M_DETECTOR_LIBRARIES
+  ${catkin_LIBRARIES}
+  ${PCL_LIBRARIES}
+  ${PYTHON_LIBRARIES}
+  ${livox_ros_driver_LIBRARIES}
+)
+
+if(TARGET OpenMP::OpenMP_CXX)
+  list(APPEND M_DETECTOR_LIBRARIES OpenMP::OpenMP_CXX)
+endif()
+
 
 add_executable(dynfilter src/dynfilter_with_odom.cpp src/DynObjFilter.cpp src/DynObjCluster.cpp)
-target_link_libraries(dynfilter ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${OpenCV_LIBS} TBB::tbb)
+target_link_libraries(dynfilter ${M_DETECTOR_LIBRARIES})
 target_include_directories(dynfilter PRIVATE ${PYTHON_INCLUDE_DIRS})
 
 add_executable(display_prediction src/display_prediction.cpp )
-target_link_libraries(display_prediction ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${OpenCV_LIBS} TBB::tbb)
+target_link_libraries(display_prediction ${M_DETECTOR_LIBRARIES})
 target_include_directories(display_prediction PRIVATE ${PYTHON_INCLUDE_DIRS})
 
 
 add_executable(cal_recall src/cal_recall_multi.cpp)
-target_link_libraries(cal_recall ${catkin_LIBRARIES} ${PCL_LIBRARIES} ${PYTHON_LIBRARIES} ${OpenCV_LIBS} TBB::tbb)
+target_link_libraries(cal_recall ${M_DETECTOR_LIBRARIES})
 target_include_directories(cal_recall PRIVATE ${PYTHON_INCLUDE_DIRS})
-
-
